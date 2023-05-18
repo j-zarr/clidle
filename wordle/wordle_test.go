@@ -1,7 +1,7 @@
 package wordle
 
 import (
-	words "golang-addon/week-1/golang-wordle/words"
+	words "golang-addon/week-1/golang-clidle/words"
 	"testing"
 )
 
