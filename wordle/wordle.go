@@ -28,10 +28,10 @@ const (
 type WordleState struct {
 	// Word is the Word that the user is trying to guess
 	Word [WordSize]byte
-	// guesses holds the guesses that the user has made.
-	// currGuess is the index of the available slot in guesses.
-	guesses   [MaxGuesses]guess
-	currGuess int
+	// Guesses holds the Guesses that the user has made.
+	// currGuess is the index of the available slot in Guesses.
+	Guesses   [MaxGuesses]Guess
+	CurrGuess int
 }
 
 // NewWordleState builds a new wordleState from a string.
@@ -42,11 +42,11 @@ func NewWordleState(word string) WordleState {
 	return w
 }
 
-// appendGuess adds a guess to the wordleState. It returns an error
+// AppendGuess adds a guess to the wordleState. It returns an error
 // if the guess is invalid.
-func (w *WordleState) appendGuess(g guess) error {
+func (w *WordleState) AppendGuess(g Guess) error {
 	// Reject guesses when the max number of guesses has been reached
-	if w.currGuess >= MaxGuesses {
+	if w.CurrGuess >= MaxGuesses {
 		return errors.New("max guesses reached")
 	}
 
@@ -60,17 +60,17 @@ func (w *WordleState) appendGuess(g guess) error {
 		return errors.New("invalid guess word")
 	}
 
-	w.guesses[w.currGuess] = g
-	w.currGuess++
+	w.Guesses[w.CurrGuess] = g
+	w.CurrGuess++
 	return nil
 }
 
 // string converts a guess into a string
-func (g *guess) string() string {
+func (g *Guess) string() string {
 	str := ""
 	for _, l := range g {
-		if 'A' <= l.char && l.char <= 'Z' {
-			str += string(l.char)
+		if 'A' <= l.Char && l.Char <= 'Z' {
+			str += string(l.Char)
 		}
 	}
 	return str
@@ -79,8 +79,8 @@ func (g *guess) string() string {
 // isWordGuessed returns true when the latest guess is the correct word
 func (w *WordleState) isWordGuessed() bool {
 	wordIsCorrect := true
-	for _, l := range w.guesses[w.currGuess-1] {
-		if l.status != Correct {
+	for _, l := range w.Guesses[w.CurrGuess-1] {
+		if l.Status != Correct {
 			wordIsCorrect = false
 		}
 	}
@@ -90,7 +90,7 @@ func (w *WordleState) isWordGuessed() bool {
 // shouldEndGame checks if the game should end
 func (w *WordleState) shouldEndGame() bool {
 	// End the game if the word is correct or the max guesses have been reached
-	if w.isWordGuessed() || w.currGuess >= MaxGuesses {
+	if w.isWordGuessed() || w.CurrGuess >= MaxGuesses {
 		return true
 	} else {
 		return false
@@ -98,20 +98,20 @@ func (w *WordleState) shouldEndGame() bool {
 }
 
 type letter struct {
-	char   byte
-	status LetterStatus
+	Char   byte
+	Status LetterStatus
 }
 
 // newLetter builds a new letter from a byte
 func newLetter(char byte) letter {
-	return letter{char: char, status: None}
+	return letter{Char: char, Status: None}
 }
 
-type guess [WordSize]letter
+type Guess [WordSize]letter
 
-// newGuess builds a new guess from a string
-func newGuess(guessedWord string) guess {
-	guess := guess{}
+// NewGuess builds a new guess from a string
+func NewGuess(guessedWord string) Guess {
+	guess := Guess{}
 	for i, c := range guessedWord {
 		guess[i] = newLetter(byte(c))
 	}
@@ -120,15 +120,15 @@ func newGuess(guessedWord string) guess {
 }
 
 // updateLettersWithWord updates the status of the letters in the guess based on a word
-func (g *guess) updateLettersWithWord(word [WordSize]byte) {
+func (g *Guess) UpdateLettersWithWord(word [WordSize]byte) {
 	for i := range g {
 		l := &g[i]
-		if l.char == word[i] {
-			l.status = Correct
-		} else if strings.Contains(string(word[:]), string(l.char)) {
-			l.status = Present
+		if l.Char == word[i] {
+			l.Status = Correct
+		} else if strings.Contains(string(word[:]), string(l.Char)) {
+			l.Status = Present
 		} else {
-			l.status = Absent
+			l.Status = Absent
 		}
 	}
 }

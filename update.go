@@ -1,8 +1,9 @@
+//Julie
 package main
 
 import (
 	"time"
-
+	"golang-addon/week-1/golang-clidle/wordle"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -22,6 +23,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlD:
 			return m, tea.Quit
+		
+		case tea.KeyBackspace:
+			m.handleDeleteChar()
+
+		case tea.KeyEnter:
+			m.handleSubmitActiveGuess()
+
+		case tea.KeyRunes:
+			if len(msg.Runes) == 1 {
+				m.handleSubmitChar(msg.Runes[0])
+			}
+		
+
 		}
 
 	case tea.WindowSizeMsg:
@@ -51,3 +65,43 @@ func (m *model) handleResetStatus() {
 
 // msgResetStatus is sent when the status line should be reset.
 type msgResetStatus struct{}
+
+
+func (m *model) handleSubmitChar(r rune) {
+	if m.cursor < wordle.WordSize {
+		if 'a' <= r && r <= 'z' {
+			r -= 'a' - 'A'
+		}
+
+		if 'A' <= r && r <= 'Z' {
+			m.activeGuess[m.cursor] = byte(r)
+			m.cursor++
+		}
+	}
+}
+
+func (m *model) handleDeleteChar() {
+	if m.cursor > 0 {
+		m.cursor--
+
+	}
+}
+
+func (m *model) handleSubmitActiveGuess() {
+	ws := m.ws
+	g := wordle.NewGuess(string(m.activeGuess[:]))
+	g.UpdateLettersWithWord(ws.Word)
+
+	err := ws.AppendGuess(g)
+	if err != nil {
+		m.handleSetStatus(err.Error(), 1*time.Second)
+		return
+	}
+
+	m.handleResetActiveGuess()
+}
+
+func (m *model) handleResetActiveGuess() {
+	copy(m.activeGuess[:], "")
+	m.cursor = 0
+}

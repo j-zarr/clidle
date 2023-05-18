@@ -26,8 +26,8 @@ func TestNewWordleState(t *testing.T) {
 	wordString := string(ws.Word[:])
 	t.Logf("Created wordleState: %+v", ws)
 	t.Logf("    word: %s", wordString)
-	t.Logf("    guesses: %#v", ws.guesses)
-	t.Logf("    currGuess: %d", ws.currGuess)
+	t.Logf("    guesses: %#v", ws.Guesses)
+	t.Logf("    currGuess: %d", ws.CurrGuess)
 
 	if wordString != word {
 		t.Errorf("word = %s; want %s", wordString, word)
@@ -36,20 +36,20 @@ func TestNewWordleState(t *testing.T) {
 
 func TestNewGuess(t *testing.T) {
 	wordToGuess := "YIELD"
-	guess := newGuess(wordToGuess)
+	guess := NewGuess(wordToGuess)
 
 	t.Logf("New guess: %s", guess.string())
 
 	// Check that the letter and status are correct
 	for i, l := range guess {
-		t.Logf("    letter %d: %c, %s", i, l.char, statusToString(l.status))
+		t.Logf("    letter %d: %c, %s", i, l.Char, statusToString(l.Status))
 
-		if l.char != wordToGuess[i] || l.status != None {
+		if l.Char != wordToGuess[i] || l.Status != None {
 			t.Errorf(
 				"letter[%d] = %c, %s; want %c, none",
 				i,
-				l.char,
-				statusToString(l.status),
+				l.Char,
+				statusToString(l.Status),
 				wordToGuess[i],
 			)
 		}
@@ -58,11 +58,11 @@ func TestNewGuess(t *testing.T) {
 
 func TestUpdateLettersWithWord(t *testing.T) {
 	guessWord := "YIELD"
-	guess := newGuess(guessWord)
+	guess := NewGuess(guessWord)
 
 	var word [WordSize]byte
 	copy(word[:], "HELLO")
-	guess.updateLettersWithWord(word)
+	guess.UpdateLettersWithWord(word)
 
 	statuses := []LetterStatus{
 		Absent,  // "Y" is not in "HELLO"
@@ -74,12 +74,12 @@ func TestUpdateLettersWithWord(t *testing.T) {
 
 	// Check that statuses are correct
 	for i, l := range guess {
-		if l.status != statuses[i] {
+		if l.Status != statuses[i] {
 			t.Errorf(
 				"letter[%d] = %c, %s; want %c, %s",
 				i,
-				l.char,
-				statusToString(l.status),
+				l.Char,
+				statusToString(l.Status),
 				guessWord[i],
 				statusToString(statuses[i]),
 			)
@@ -91,16 +91,16 @@ func TestAppendGuess(t *testing.T) {
 	ws := NewWordleState("HELLO")
 
 	// Test that currGuess is incremented when we add one guess
-	if err := ws.appendGuess(newGuess("YIELD")); err == nil {
-		if ws.currGuess != 1 {
-			t.Errorf("currGuess = %d; want 1", ws.currGuess)
+	if err := ws.AppendGuess(NewGuess("YIELD")); err == nil {
+		if ws.CurrGuess != 1 {
+			t.Errorf("currGuess = %d; want 1", ws.CurrGuess)
 		}
 	}
 
 	// Add five more guesses (six guesses total)
 	for i := 0; i < 5; i++ {
-		guess := newGuess(words.GetWord())
-		if err := ws.appendGuess(guess); err != nil {
+		guess := NewGuess(words.GetWord())
+		if err := ws.AppendGuess(guess); err != nil {
 			t.Errorf("newGuess() returned an error: %v", err)
 		}
 	}
@@ -109,25 +109,25 @@ func TestAppendGuess(t *testing.T) {
 func TestAppendGuessError(t *testing.T) {
 	ws := NewWordleState("HELLO")
 
-	var g guess
+	var g Guess
 	// Add six guesses
 	for i := 0; i < 6; i++ {
-		g = newGuess(words.GetWord())
-		ws.appendGuess(g)
+		g = NewGuess(words.GetWord())
+		ws.AppendGuess(g)
 	}
 	// Test that we get an error when we try to add a seventh guess
-	g = newGuess(words.GetWord())
-	if err := ws.appendGuess(g); err == nil {
+	g = NewGuess(words.GetWord())
+	if err := ws.AppendGuess(g); err == nil {
 		t.Errorf("appendGuess() should result in an error")
 	}
 }
 
 func TestIsWordGuessed(t *testing.T) {
 	ws := NewWordleState("HELLO")
-	g := newGuess("HELLO")
+	g := NewGuess("HELLO")
 
-	g.updateLettersWithWord(ws.Word)
-	ws.appendGuess(g)
+	g.UpdateLettersWithWord(ws.Word)
+	ws.AppendGuess(g)
 
 	if !ws.isWordGuessed() {
 		t.Errorf("isWordGuessed() should return true")
@@ -136,10 +136,10 @@ func TestIsWordGuessed(t *testing.T) {
 
 func TestShouldEndGameCorrect(t *testing.T) {
 	ws := NewWordleState("HELLO")
-	g := newGuess("HELLO")
+	g := NewGuess("HELLO")
 
-	g.updateLettersWithWord(ws.Word)
-	ws.appendGuess(g)
+	g.UpdateLettersWithWord(ws.Word)
+	ws.AppendGuess(g)
 
 	if !ws.shouldEndGame() {
 		t.Errorf("shouldEndGame() should return true")
@@ -151,9 +151,9 @@ func TestShouldEndGameMaxGuesses(t *testing.T) {
 
 	// Test that we end the game when we have six guesses
 	for i := 0; i < 6; i++ {
-		g := newGuess(words.GetWord())
-		g.updateLettersWithWord(ws.Word)
-		ws.appendGuess(g)
+		g := NewGuess(words.GetWord())
+		g.UpdateLettersWithWord(ws.Word)
+		ws.AppendGuess(g)
 	}
 	if !ws.shouldEndGame() {
 		t.Errorf("shouldEndGame() should return true")
